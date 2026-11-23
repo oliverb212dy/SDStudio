@@ -45,6 +45,8 @@ export const CONFIG_GROUP_ORDER: readonly ConfigGroupKey[] = [
 // as const = 필드명 리터럴 유지(테스트가 Config 전 필드 분류 여부를 컴파일 시점에 확인).
 export const CONFIG_GROUP_FIELDS = {
   generation: [
+    'generationProvider',
+    'comfyUi',
     'modelVersion',
     'qualityPreset',
     'disableQuality',

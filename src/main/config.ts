@@ -32,6 +32,22 @@ export interface ImageSaveSettings {
 }
 
 export interface Config {
+  /** 생성 백엔드. 미설정은 NovelAI 호환을 위해 사용한다. */
+  generationProvider?: 'novelai' | 'comfyui';
+  /** ComfyUI API 연동 설정. workflowJson 은 ComfyUI의 API Format(JSON)을 저장한다. */
+  comfyUi?: {
+    baseUrl?: string;
+    workflowJson?: string;
+    promptNodeId?: string;
+    negativeNodeId?: string;
+    seedNodeId?: string;
+    stepsNodeId?: string;
+    cfgNodeId?: string;
+    widthNodeId?: string;
+    heightNodeId?: string;
+    imageNodeId?: string;
+    maskNodeId?: string;
+  };
   imageEditor?: ImageEditor;
   /** 「사용자 지정」 이미지 편집기의 실행 파일 절대 경로(.exe, Windows 전용, 2026-11-22). imageEditor 가 'custom' 일
    *  때만 쓰고, 다른 편집기를 골라도 지우지 않는다(다시 고를 때 그대로). 기기마다 다른 경로라 환경설정

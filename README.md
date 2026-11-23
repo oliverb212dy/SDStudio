@@ -7,6 +7,12 @@ Stable Diffusion 계열 API와 모델을 사용하기 편하게 해주는 프론
 
 ## 주요 기능
 
+### ComfyUI 연동
+
+환경설정의 **로그인** 탭에서 생성 백엔드를 `ComfyUI 로컬/API 서버`로 선택한 뒤
+ComfyUI 주소와 `Save (API Format)`로 내보낸 workflow JSON을 저장할 수 있습니다.
+기본 주소는 `http://127.0.0.1:8188`입니다.
+
 ### 씬 별 이미지 생성
 ![](images/img3.png)
 

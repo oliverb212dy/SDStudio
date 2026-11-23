@@ -2,6 +2,8 @@ name: Build Windows Portable
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
   release:
     types: [published]
 
@@ -42,6 +44,12 @@ jobs:
 
       - name: Install electron-builder app deps
         run: npx electron-builder install-app-deps
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --runInBand
 
       - name: Build application
         run: npm run build

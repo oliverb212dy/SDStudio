@@ -30,6 +30,8 @@ import { Buffer } from 'buffer';
 import { v4 as uuidv4 } from 'uuid';
 import Pica from 'pica';
 import { NovelAiFetcher, NovelAiImageGenService } from './genVendors/nai';
+import { ComfyUiImageGenService } from './genVendors/comfyui';
+import { GenerationProviderService } from './genVendors/provider';
 import { createNaiApiError } from './genVendors/naiErrors';
 import { assertDeletableDirPath } from './dataPathGuard';
 import { GenerateImageOptions, resolveRequestToken } from './requestToken';
@@ -242,7 +244,6 @@ export class AndroidBackend extends Backend {
       recursive: true,
       directory: Directory.Documents,
     });
-    this.imageGenService = new NovelAiImageGenService(new AndroidFetcher());
     configLoadPromise = (async () => {
       try {
         const data = await Filesystem.readFile({
@@ -258,6 +259,17 @@ export class AndroidBackend extends Backend {
       }
       configLoaded = true;
     })();
+    const novelAi = new NovelAiImageGenService(new AndroidFetcher());
+    const getLoadedConfig = async (): Promise<Config> => {
+      if (configLoadPromise) await configLoadPromise;
+      return config;
+    };
+    const comfyUi = new ComfyUiImageGenService(getLoadedConfig);
+    this.imageGenService = new GenerationProviderService(
+      getLoadedConfig,
+      novelAi,
+      comfyUi,
+    );
     // 원자 쓰기(tmp+rename)가 쓰기와 rename 사이 강제 종료로 남긴 고아 tmp 정리.
     // tmp 는 항상 uuid v4 파일명(확장자 없음)이라 정확히 그 형태만 지운다. (비차단)
     (async () => {

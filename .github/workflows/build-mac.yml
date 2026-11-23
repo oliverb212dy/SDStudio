@@ -2,6 +2,8 @@ name: Build macOS
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
   release:
     types: [published]
 
@@ -52,6 +54,12 @@ jobs:
           npm install --legacy-peer-deps
           npm run build
           cd ../..
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --runInBand
 
       - name: Build application
         run: npm run build

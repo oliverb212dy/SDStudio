@@ -108,6 +108,9 @@ interface ConfigScreenProps {
 const LoginTab = ({
   accessToken, setAccessToken,
   loggedIn, loginWithToken, roundTag,
+  generationProvider, setGenerationProvider,
+  comfyUiBaseUrl, setComfyUiBaseUrl,
+  comfyUiWorkflowJson, setComfyUiWorkflowJson,
   multiTokenAutoRotate, setMultiTokenAutoRotate,
   multiTokenRotateWarning, setMultiTokenRotateWarning,
   multiTokenRotateTarget, setMultiTokenRotateTarget,
@@ -378,6 +381,41 @@ const LoginTab = ({
   // 「여러 토큰」 안의 자동 순회 하위 상자는 기존 상자 그대로 둔다(묶음 안에 묶음을 만들지 않음).
   return (
     <div className="space-y-5">
+      <SettingGroup title="이미지 생성 백엔드">
+        <SettingField>
+          <select
+            className="gray-input block w-full"
+            aria-label="이미지 생성 백엔드"
+            value={generationProvider}
+            onChange={(event) => setGenerationProvider(event.target.value)}
+          >
+            <option value="novelai">NovelAI API</option>
+            <option value="comfyui">ComfyUI 로컬/API 서버</option>
+          </select>
+          {generationProvider === 'comfyui' && (
+            <div className="mt-3 space-y-3">
+              <input
+                className="gray-input block w-full"
+                aria-label="ComfyUI 서버 주소"
+                placeholder="http://127.0.0.1:8188"
+                value={comfyUiBaseUrl}
+                onChange={(event) => setComfyUiBaseUrl(event.target.value)}
+              />
+              <textarea
+                className="gray-input block w-full min-h-32 font-mono text-xs"
+                aria-label="ComfyUI API workflow JSON"
+                placeholder={'ComfyUI에서 API Format으로 내보낸 workflow JSON을 붙여넣으세요'}
+                value={comfyUiWorkflowJson}
+                onChange={(event) => setComfyUiWorkflowJson(event.target.value)}
+              />
+              <p className="text-xs text-muted">
+                ComfyUI Workflow 메뉴의 「Save (API Format)」 결과를 사용하세요.
+                프롬프트, 네거티브 프롬프트, 시드, 스텝, CFG, 해상도는 자동으로 적용됩니다.
+              </p>
+            </div>
+          )}
+        </SettingField>
+      </SettingGroup>
       <SettingGroup title="API 토큰으로 로그인">
        <SettingField>
         <div className="flex gap-2 mb-2">
@@ -864,6 +902,9 @@ const ConfigScreen = observer(({ onSave, onClose }: ConfigScreenProps) => {
   const [uiPillButtons, setUiPillButtons] = useState(false);
   const [allowDuplicateProjectOpen, setAllowDuplicateProjectOpen] = useState(false);
   const [promptWeightSpacingFix, setPromptWeightSpacingFix] = useState(true);
+  const [generationProvider, setGenerationProvider] = useState<'novelai' | 'comfyui'>('novelai');
+  const [comfyUiBaseUrl, setComfyUiBaseUrl] = useState('http://127.0.0.1:8188');
+  const [comfyUiWorkflowJson, setComfyUiWorkflowJson] = useState('');
   const [multiTokenAutoRotate, setMultiTokenAutoRotate] = useState(false);
   const [multiTokenRotateWarning, setMultiTokenRotateWarning] = useState(10);
   const [multiTokenRotateTarget, setMultiTokenRotateTarget] = useState(25);
@@ -893,6 +934,9 @@ const ConfigScreen = observer(({ onSave, onClose }: ConfigScreenProps) => {
     setAutoConvertWebp(config.autoConvertWebp ?? false);
     setAutoWebpQuality(config.autoConvertWebpQuality ?? 80);
     setUseLocalBgRemoval(config.useLocalBgRemoval ?? false);
+    setGenerationProvider(config.generationProvider === 'comfyui' ? 'comfyui' : 'novelai');
+    setComfyUiBaseUrl(config.comfyUi?.baseUrl ?? 'http://127.0.0.1:8188');
+    setComfyUiWorkflowJson(config.comfyUi?.workflowJson ?? '');
     // 새 키가 없으면 옛 delayTime 을 ×7.5·×1.5 로 환산(5.4.0 이하), 그것도 없으면 기본값(T3b —
     // 실행 루프와 같은 resolveRequestDelaySettings).
     {
@@ -1152,6 +1196,11 @@ const ConfigScreen = observer(({ onSave, onClose }: ConfigScreenProps) => {
       uiPillButtons: uiPillButtons,
       allowDuplicateProjectOpen: allowDuplicateProjectOpen,
       promptWeightSpacingFix: promptWeightSpacingFix,
+      generationProvider,
+      comfyUi: {
+        baseUrl: comfyUiBaseUrl.trim() || 'http://127.0.0.1:8188',
+        workflowJson: comfyUiWorkflowJson.trim() || undefined,
+      },
       multiTokenAutoRotate: multiTokenAutoRotate,
       multiTokenRotateWarningPercent: multiTokenRotateWarning,
       multiTokenRotateTargetPercent: multiTokenRotateTarget,
@@ -1277,7 +1326,7 @@ const ConfigScreen = observer(({ onSave, onClose }: ConfigScreenProps) => {
     const key = tabs[tabIdx]?.key;
     switch (key) {
       case 'login':
-        return <LoginTab {...{ accessToken, setAccessToken, loggedIn, loginWithToken, roundTag, multiTokenAutoRotate, setMultiTokenAutoRotate, multiTokenRotateWarning, setMultiTokenRotateWarning, multiTokenRotateTarget, setMultiTokenRotateTarget, multiTokenBalanceRotate, setMultiTokenBalanceRotate, multiTokenRotateBalance, setMultiTokenRotateBalance, boostSettings, setBoostSettings, boostModeChoice, setBoostModeChoice }} />;
+        return <LoginTab {...{ accessToken, setAccessToken, loggedIn, loginWithToken, roundTag, generationProvider, setGenerationProvider, comfyUiBaseUrl, setComfyUiBaseUrl, comfyUiWorkflowJson, setComfyUiWorkflowJson, multiTokenAutoRotate, setMultiTokenAutoRotate, multiTokenRotateWarning, setMultiTokenRotateWarning, multiTokenRotateTarget, setMultiTokenRotateTarget, multiTokenBalanceRotate, setMultiTokenBalanceRotate, multiTokenRotateBalance, setMultiTokenRotateBalance, boostSettings, setBoostSettings, boostModeChoice, setBoostModeChoice }} />;
       case 'storage':
         return <StorageImageTab {...{ saveLocation, dataRoot, selectFolder, clearImageCache, refreshImage, setRefreshImage, defaultExportFolder, setDefaultExportFolder, selectDefaultExportFolder, autoConvertWebp, setAutoConvertWebp, autoWebpQuality, setAutoWebpQuality, imageEditor, setImageEditor, customImageEditorPath, selectCustomImageEditor, useLocalBgRemoval, setUseLocalBgRemoval, ready, stage, progress, stageTexts, useGPU, setUseGPU, quality, setQuality }} />;
       case 'system':

@@ -17,6 +17,8 @@ import { Backend, FileEntry, ResizeImageInput, SelectFileOptions } from '../back
 import { assertDeletableDirPath } from './dataPathGuard';
 import { GenerateImageOptions, resolveRequestToken } from './requestToken';
 import { NovelAiFetcher, NovelAiImageGenService } from './genVendors/nai';
+import { ComfyUiImageGenService } from './genVendors/comfyui';
+import { GenerationProviderService } from './genVendors/provider';
 import { createNaiApiError } from './genVendors/naiErrors';
 import {
   NaiRequestOptions,
@@ -98,9 +100,17 @@ export class ElectornBackend extends Backend {
   constructor() {
     super();
     // 개발자용 API 주소 전환(shared/naiEndpoints.ts) — main 이 읽은 환경 변수 값(없으면 null)을 1회 받는다.
-    this.imageGenService = new NovelAiImageGenService(
+    const novelAi = new NovelAiImageGenService(
       new ElectronFetcher(),
       invoke ? invoke(DEV_NAI_API_BASE_CHANNEL) : undefined,
+    );
+    const comfyUi = new ComfyUiImageGenService(() =>
+      invoke ? invoke('get-config') : Promise.resolve({}),
+    );
+    this.imageGenService = new GenerationProviderService(
+      () => (invoke ? invoke('get-config') : Promise.resolve({})),
+      novelAi,
+      comfyUi,
     );
   }
 
