@@ -1,0 +1,86 @@
+name: Build Android
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install native module dependencies
+        run: |
+          cd src/native
+          npm ci
+          cd ../..
+
+      - name: Build capacitor-background-mode
+        run: |
+          cd externals/capacitor-background-mode
+          npm ci --legacy-peer-deps
+          npm run build
+          cd ../..
+
+      - name: Install project dependencies
+        run: npm ci --legacy-peer-deps --ignore-scripts
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Run tests
+        run: npm test -- --runInBand
+
+      - name: Build web application
+        run: npm run build
+        env:
+          SDSTUDIO_GOOGLE_CLIENT_ID: ${{ secrets.SDSTUDIO_GOOGLE_CLIENT_ID }}
+          SDSTUDIO_GOOGLE_CLIENT_SECRET: ${{ secrets.SDSTUDIO_GOOGLE_CLIENT_SECRET }}
+
+      - name: Sync Android project
+        run: npx cap sync android
+
+      - name: Build debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Get version
+        run: echo "version=$(jq -r '.version' release/app/package.json)" >> $GITHUB_ENV
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SDStudio-${{ env.version }}-android-debug
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/*.apk
